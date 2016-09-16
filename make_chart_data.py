@@ -46,19 +46,23 @@ proper_names = {
     'qt_qhash': 'Qt 4.5 QHash',
     'python_dict': 'Python 2.6 (C API) dict',
     'ruby_hash': 'Ruby 1.9 (C API) Hash',
+    'robin_hood': 'Robin Hood Hash',
+    'stl_map': 'GCC 4.4 std::map',
 }
 
 # do them in the desired order to make the legend not overlap the chart data
 # too much
 program_slugs = [
-    'google_sparse_hash_map',
-    'google_dense_hash_map',
+    # 'google_sparse_hash_map',
+    # 'google_dense_hash_map',
     'stl_unordered_map',
-    'boost_unordered_map',
+    # 'boost_unordered_map',
     'python_dict',
-    'ruby_hash',
-    'glib_hash_table',
-    'qt_qhash',
+    # 'ruby_hash',
+    # 'glib_hash_table',
+    'stl_map',
+    'robin_hood',
+    # 'qt_qhash',
 ]
 
 chart_data = {}

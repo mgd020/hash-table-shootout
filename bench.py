@@ -1,19 +1,21 @@
 import sys, os, subprocess, signal
 
 programs = [
-    'glib_hash_table',
+    # 'glib_hash_table',
     'stl_unordered_map',
-    'boost_unordered_map',
-    'google_sparse_hash_map',
-    'google_dense_hash_map',
-    'qt_qhash',
+    # 'boost_unordered_map',
+    # 'google_sparse_hash_map',
+    # 'google_dense_hash_map',
+    # 'qt_qhash',
     'python_dict',
-    'ruby_hash',
+    # 'ruby_hash',
+    'robin_hood',
+    'stl_map',
 ]
 
-minkeys  =  2*1000*1000
-maxkeys  = 40*1000*1000
-interval =  2*1000*1000
+interval =  1000*1000 # 2*1000*1000
+minkeys  = 1000*1000 # 2*1000*1000
+maxkeys  = minkeys + (interval * 5)
 best_out_of = 2
 
 # for the final run, use this:

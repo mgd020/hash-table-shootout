@@ -1,10 +1,78 @@
 <html>
-    <head>
-        <!--[if IE]><script language="javascript" type="text/javascript" src="http://flot.googlecode.com/svn/trunk/excanvas.min.js"></script><![endif]-->
-        <script language="javascript" type="text/javascript" src="http://flot.googlecode.com/svn/trunk/jquery.js"></script>
-        <script language="javascript" type="text/javascript" src="http://flot.googlecode.com/svn/trunk/jquery.flot.js"></script>
-    </head>
     <body>
+
+<style>
+    body, * { font-family: sans-serif; }
+    div.chart {
+        width: 700px;
+        height: 230px;
+    }
+    div.xaxis-title {
+        width: 700px;
+        text-align: center;
+        font-style: italic;
+        font-size: small;
+        color: #666;
+    }
+</style>
+
+<table>
+    <tr>
+        <th>&nbsp;</th>
+        <th>Integers</th>
+        <th>Strings</th>
+    </tr>
+    <tr>
+        <th>Sequential Inserts: Execution Time</th>
+        <td>
+            <div class="chart" id="sequential-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+        <td>
+            <div class="chart" id="sequentialstring-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+    </tr>
+
+    <tr>
+        <th>Random Inserts: Execution Time</th>
+        <td>
+            <div class="chart" id="random-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+        <td>
+            <div class="chart" id="randomstring-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+    </tr>
+
+    <tr>
+        <th>Deletes: Execution Time</th>
+        <td>
+            <div class="chart" id="delete-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+        <td>
+            <div class="chart" id="deletestring-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+    </tr>
+
+    <tr>
+        <th>Memory Usage</th>
+        <td>
+            <div class="chart" id="sequential-memory"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+        <td>
+            <div class="chart" id="sequentialstring-memory"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+    </tr>
+</table>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
 
 <script>
     series_settings = {
@@ -63,58 +131,6 @@
         $.plot($("#sequentialstring-memory"),  chart_data['sequentialstring-memory'],  memory_settings);
     });
 </script>
-
-<style>
-    body, * { font-family: sans-serif; }
-    div.chart {
-        width: 700px;
-        height: 230px;
-    }
-    div.xaxis-title {
-        width: 700px;
-        text-align: center;
-        font-style: italic;
-        font-size: small;
-        color: #666;
-    }
-</style>
-
-
-<h3>Sequential Inserts: Execution Time (integers)</h3>
-<div class="chart" id="sequential-runtime"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
-<h3>Sequential Inserts: Execution Time (strings)</h3>
-<div class="chart" id="sequentialstring-runtime"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
-
-<h3>Random Inserts: Execution Time (integers)</h3>
-<div class="chart" id="random-runtime"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
-<h3>Random Inserts: Execution Time (strings)</h3>
-<div class="chart" id="randomstring-runtime"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
-
-<h3>Deletes: Execution Time (integers)</h3>
-<div class="chart" id="delete-runtime"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
-<h3>Deletes: Execution Time (strings)</h3>
-<div class="chart" id="deletestring-runtime"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
-
-<h3>Memory Usage (integers)</h3>
-<div class="chart" id="sequential-memory"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
-<h3>Memory Usage (strings)</h3>
-<div class="chart" id="sequentialstring-memory"></div>
-<div class="xaxis-title">number of entries in hash table</div>
-
 
 </body>
 </html>
