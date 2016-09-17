@@ -12,11 +12,18 @@ build/stl_map: src/stl_map.cc Makefile src/template.c
 build/boost_unordered_map: src/boost_unordered_map.cc Makefile src/template.c
 	g++ -O2 -lm src/boost_unordered_map.cc -o build/boost_unordered_map
 
-build/google_sparse_hash_map: src/google_sparse_hash_map.cc Makefile src/template.c
-	g++ -O2 -lm src/google_sparse_hash_map.cc -o build/google_sparse_hash_map
+vendor/sparsehash/src/sparsehash/internal/sparseconfig.h:
+	cd vendor/sparsehash && \
+	./configure && \
+	make
 
-build/google_dense_hash_map: src/google_dense_hash_map.cc Makefile src/template.c
-	g++ -O2 -lm src/google_dense_hash_map.cc -o build/google_dense_hash_map
+google_sparsehash: vendor/sparsehash/src/sparsehash/internal/sparseconfig.h
+
+build/google_sparse_hash_map: google_sparsehash src/google_sparse_hash_map.cc Makefile src/template.c
+	g++ -O2 -lm -I vendor/sparsehash/src src/google_sparse_hash_map.cc -o build/google_sparse_hash_map
+
+build/google_dense_hash_map: google_sparsehash src/google_dense_hash_map.cc Makefile src/template.c
+	g++ -O2 -lm -I vendor/sparsehash/src src/google_dense_hash_map.cc -o build/google_dense_hash_map
 
 build/qt_qhash: src/qt_qhash.cc Makefile src/template.c
 	g++ -O2 -lm `pkg-config --cflags --libs QtCore` src/qt_qhash.cc -o build/qt_qhash
@@ -32,3 +39,8 @@ build/robin_hood: src/robin_hood.cc Makefile src/template.c
 
 charts:
 	python bench.py && python make_chart_data.py < output | python make_html.py
+
+.PHONY: clean
+clean:
+	rm build/*
+	cd vendor/spacehash && git reset --hard
