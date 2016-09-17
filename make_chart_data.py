@@ -56,13 +56,13 @@ program_slugs = [
     'google_sparse_hash_map',
     'google_dense_hash_map',
     'stl_unordered_map',
-    # 'boost_unordered_map',
+    'boost_unordered_map',
     'python_dict',
-    # 'ruby_hash',
-    # 'glib_hash_table',
+    'ruby_hash',
+    'glib_hash_table',
     'stl_map',
     'robin_hood',
-    # 'qt_qhash',
+    'qt_qhash',
 ]
 
 chart_data = {}
@@ -70,7 +70,10 @@ chart_data = {}
 for i, (benchtype, programs) in enumerate(by_benchtype.items()):
     chart_data[benchtype] = []
     for j, program in enumerate(program_slugs):
-        data = programs[program]
+        try:
+            data = programs[program]
+        except KeyError:
+            continue
         chart_data[benchtype].append({
             'label': proper_names[program],
             'data': [],

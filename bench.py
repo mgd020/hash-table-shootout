@@ -1,21 +1,22 @@
-import sys, os, subprocess, signal
+import sys, os, subprocess, signal, os.path
 
 programs = [
-    # 'glib_hash_table',
+    'glib_hash_table',
     'stl_unordered_map',
-    # 'boost_unordered_map',
+    'boost_unordered_map',
     'google_sparse_hash_map',
     'google_dense_hash_map',
-    # 'qt_qhash',
+    'qt_qhash',
     'python_dict',
-    # 'ruby_hash',
+    'ruby_hash',
     'robin_hood',
     'stl_map',
 ]
 
-interval =  1000*1000 # 2*1000*1000
-minkeys  = 1000*1000 # 2*1000*1000
-maxkeys  = minkeys + (interval * 5)
+programs = [p for p in programs if os.path.isfile('./build/' + p)]
+
+minkeys  = 1
+maxkeys  = 10*1000*1000
 best_out_of = 2
 
 # for the final run, use this:
@@ -26,8 +27,6 @@ best_out_of = 2
 # and use nice/ionice
 # and shut down to the console
 # and swapoff any swap files/partitions
-
-outfile = open('output', 'w')
 
 if len(sys.argv) > 1:
     benchtypes = sys.argv[1:]
@@ -65,7 +64,6 @@ for benchtype in benchtypes:
                         fastest_attempt_data = line
 
             if fastest_attempt != 1000000:
-                print >> outfile, fastest_attempt_data
                 print fastest_attempt_data
 
-        nkeys += interval
+        nkeys *= 2
