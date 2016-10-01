@@ -37,15 +37,20 @@ build/ruby_hash: src/ruby_hash.c Makefile src/template.c
 build/robin_hood: src/robin_hood.cc Makefile src/template.c
 	g++ -O2 -lm src/robin_hood.cc -o build/robin_hood -std=c++0x
 
+build/custom: src/custom.cc Makefile src/template.c
+	g++ -O2 -lm -std=c++11 src/custom.cc -o build/custom
+
+clean_bench:
+	rm build/bench.csv build/bench.html
+
 build/bench.csv:
 	python -u bench.py | tee build/bench.csv
 
 build/bench.html: build/bench.csv
 	python make_chart_data.py < build/bench.csv | python make_html.py > build/bench.html
 
-bench: build/bench.csv build/bench.html
+bench: build/bench.html
 
 .PHONY: clean
 clean:
 	rm build/*
-	cd vendor/spacehash && git reset --hard
