@@ -11,12 +11,13 @@ programs = [
     'ruby_hash',
     'robin_hood',
     'stl_map',
+    'custom',
 ]
 
 programs = [p for p in programs if os.path.isfile('./build/' + p)]
 
 minkeys  = 1
-maxkeys  = 10*1000*1000
+maxkeys  = 5*1000*1000
 best_out_of = 2
 
 # for the final run, use this:
