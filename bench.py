@@ -35,10 +35,10 @@ programs = [
     if os.path.isfile('./build/' + p) and (not os.path.isfile('./build/' + p + '.csv') or os.path.getmtime('./build/' + p) > os.path.getmtime('./build/' + p + '.csv'))
 ]
 
-minkeys  = 1
+minkeys  = 128
 maxkeys  = 5*1000*1000
 interval = 2
-best_out_of = 2
+best_out_of = 1
 
 # for the final run, use this:
 #minkeys  =  2*1000*1000
