@@ -1,6 +1,6 @@
 import sys, os, subprocess, signal, os.path
 
-programs = [
+all_programs = [
     'glib_hash_table',
     'stl_unordered_map',
     'boost_unordered_map',
@@ -13,6 +13,20 @@ programs = [
     'stl_map',
     'custom',
 ]
+
+programs = []
+
+for program in all_programs:
+    program_path = './build/' + program
+    csv_path = program_path + '.csv'
+    if not os.path.isfile(program_path):
+        continue
+    if os.path.isfile(csv_path):
+        if os.path.getmtime(program_path) > os.path.getmtime(csv_path):
+            os.remove(csv_path)
+        else:
+            continue
+    programs.append(program)
 
 # remove programs that have not been updated
 programs = [
