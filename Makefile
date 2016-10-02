@@ -41,8 +41,8 @@ build/custom: src/custom.cc Makefile src/template.c
 	g++ -O2 -lm -std=c++11 src/custom.cc -o build/custom
 
 bench:
-	python -u bench.py | tee build/bench.csv
-	python make_chart_data.py < build/bench.csv | python make_html.py > build/bench.html
+	python -u bench.py
+	cat build/*.csv | python make_chart_data.py | python make_html.py > build/bench.html
 
 .PHONY: clean
 clean:

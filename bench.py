@@ -14,10 +14,16 @@ programs = [
     'custom',
 ]
 
-programs = [p for p in programs if os.path.isfile('./build/' + p)]
+# remove programs that have not been updated
+programs = [
+    p
+    for p in programs
+    if os.path.isfile('./build/' + p) and (not os.path.isfile('./build/' + p + '.csv') or os.path.getmtime('./build/' + p) > os.path.getmtime('./build/' + p + '.csv'))
+]
 
 minkeys  = 1
 maxkeys  = 5*1000*1000
+interval = 2
 best_out_of = 2
 
 # for the final run, use this:
@@ -38,7 +44,7 @@ for benchtype in benchtypes:
     nkeys = minkeys
     while nkeys <= maxkeys:
         for program in programs:
-            fastest_attempt = 1000000
+            fastest_attempt = None
             fastest_attempt_data = ''
 
             for attempt in range(best_out_of):
@@ -60,11 +66,13 @@ for benchtype in benchtypes:
                 if nbytes and runtime: # otherwise it crashed
                     line = ','.join(map(str, [benchtype, nkeys, program, nbytes, "%0.6f" % runtime]))
 
-                    if runtime < fastest_attempt:
+                    if fastest_attempt is None or runtime < fastest_attempt:
                         fastest_attempt = runtime
                         fastest_attempt_data = line
 
-            if fastest_attempt != 1000000:
+            if fastest_attempt is not None:
                 print fastest_attempt_data
+                with open('./build/' + program + '.csv', 'a') as f:
+                    f.write(fastest_attempt_data + '\n')
 
-        nkeys *= 2
+        nkeys *= interval
