@@ -142,7 +142,14 @@ class hash_table
         int dist = 0;
         for(;;)
         {
-            if(elem_hash(pos) == 0)
+            uint32_t h = elem_hash(pos);
+
+            if (h == hash && buffer[pos].key == key) {
+                std::swap(buffer[pos].value, val);
+                return;
+            }
+
+            if(h == 0)
             {
                 construct(pos, hash, std::move(key), std::move(val));
                 return;
@@ -268,7 +275,9 @@ typedef hash_table<int64_t, int64_t> hash_t;
 typedef hash_table<const char *, int64_t> str_hash_t;
 #define SETUP hash_t hash; str_hash_t str_hash;
 #define INSERT_INT_INTO_HASH(key, value) hash.insert(key, value)
+#define LOOKUP_INT_IN_HASH(key) hash.find(key) != NULL
 #define DELETE_INT_FROM_HASH(key) hash.erase(key)
 #define INSERT_STR_INTO_HASH(key, value) str_hash.insert(key, value)
+#define LOOKUP_STR_IN_HASH(key) str_hash.find(key) != NULL
 #define DELETE_STR_FROM_HASH(key) str_hash.erase(key)
 #include "template.c"

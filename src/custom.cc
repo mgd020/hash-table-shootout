@@ -41,9 +41,9 @@ public:
         return !_size;
     }
 
-    V & get(const K & k) {
+    V * get(const K & k) {
         if (!_size) {
-            throw std::out_of_range("");
+            return NULL;
         }
 
         size_t h = hash_key(k);
@@ -53,20 +53,13 @@ public:
         while (true) {
             size_t hash_i = _h[i];
 
-            if (hash_i == -1) {
-                throw std::out_of_range("");
-            }
-
             if (hash_i == h) {
                 value_type & kv = _kv[i];
                 if (keys_equal(k, kv.first)) {
-                    return kv.second;
+                    return &_kv[i];
                 }
-            } else {
-                size_t dist_i = probe_distance(hash_i, i);
-                if (dist > dist_i) {
-                    throw std::out_of_range("");
-                }
+            } else if (hash_i == -1 || probe_distance(hash_i, i) < dist) {
+                return NULL;
             }
 
             i = (i + 1) & _mask;
@@ -74,11 +67,14 @@ public:
         }
     }
 
-    inline const V & get(const K & k) const {
+    inline const V * get(const K & k) const {
         return const_cast<Custom *>(this)->get(k);
     }
 
     void set(value_type && kv) {
+        if (_size == _grow) {
+            rehash(_capacity * 2);
+        }
         _set(hash_key(kv.first), std::move(kv));
     }
 
@@ -94,10 +90,6 @@ public:
         while (true) {
             size_t hash_i = _h[i];
 
-            if (hash_i == -1) {
-                return;
-            }
-
             if (hash_i == h) {
                 value_type & kv = _kv[i];
                 if (keys_equal(k, kv.first)) {
@@ -106,10 +98,8 @@ public:
                     --_size;
                     break;
                 }
-            } else {
-                if (dist > probe_distance(hash_i, i)) {
-                    return;
-                }
+            } else if (hash_i == -1 || probe_distance(hash_i, i) < dist) {
+                return;
             }
 
             i = (i + 1) & _mask;
@@ -121,16 +111,10 @@ public:
         } else {
             while (true) {
                 i = (i + 1) & _mask;
-
                 size_t hash_i = _h[i];
-                if (hash_i == -1) {
+                if (hash_i == -1 || !probe_distance(hash_i, i)) {
                     break;
                 }
-
-                if (!probe_distance(hash_i, i)) {
-                    break;
-                }
-
                 std::swap(_h[i], _h[i - 1]);
                 std::swap(_kv[i], _kv[i - 1]);
             }
@@ -172,22 +156,11 @@ public:
     }
 
     void _set(size_t h, value_type && kv) {
-        if (_size == _grow) {
-            rehash(_capacity * 2);
-        }
-
         size_t i = bucket(h);
         size_t dist = 0;
 
         while (true) {
             size_t hash_i = _h[i];
-
-            if (hash_i == -1) {
-                new (&_kv[i]) value_type(std::move(kv));
-                _h[i] = h;
-                ++_size;
-                return;
-            }
 
             if (hash_i == h) {
                 value_type & kv_i = _kv[i];
@@ -195,9 +168,14 @@ public:
                     kv_i.second = std::move(kv.second);
                     return;
                 }
+            } else if (hash_i == -1) {
+                construct(_kv[i], std::move(kv));
+                _h[i] = h;
+                ++_size;
+                return;
             } else {
                 size_t dist_i = probe_distance(hash_i, i);
-                if (dist > dist_i) {
+                if (dist_i < dist) {
                     std::swap(_h[i], h);
                     std::swap(_kv[i], kv);
                     dist = dist_i;
@@ -228,9 +206,12 @@ public:
         return p(k1, k2);
     }
 
-    template <class T>
-    inline static void destruct(T & t) {
-        t.~T();
+    inline static void construct(value_type & t, value_type && v) {
+        new (&t) value_type(std::move(v));
+    }
+
+    inline static void destruct(value_type & v) {
+        v.~value_type();
     }
 
     size_t * __restrict _h; // hashes (0 is empty)
@@ -250,8 +231,10 @@ typedef Custom<int64_t, int64_t> hash_t;
 typedef Custom<const char *, int64_t> str_hash_t;
 #define SETUP hash_t hash; str_hash_t str_hash;
 #define INSERT_INT_INTO_HASH(key, value) hash.set(std::make_pair(key, value))
+#define LOOKUP_INT_IN_HASH(key) hash.get(key) != NULL
 #define DELETE_INT_FROM_HASH(key) hash.del(key)
 #define INSERT_STR_INTO_HASH(key, value) str_hash.set(std::make_pair(key, value))
+#define LOOKUP_STR_IN_HASH(key) str_hash.get(key) != NULL
 #define DELETE_STR_FROM_HASH(key) str_hash.del(key)
 
 #if 1

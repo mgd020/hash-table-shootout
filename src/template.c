@@ -56,6 +56,16 @@ int main(int argc, char ** argv)
             DELETE_INT_FROM_HASH(i);
     }
 
+    else if(!strcmp(argv[2], "lookup"))
+    {
+        srandom(1); // for a fair/deterministic comparison
+        for(i = 0; i < num_keys; i++)
+            INSERT_INT_INTO_HASH(i, value);
+        before = get_time();
+        for(i = 0; i < num_keys; i++)
+            LOOKUP_INT_IN_HASH((int)random());
+    }
+
     else if(!strcmp(argv[2], "sequentialstring"))
     {
         for(i = 0; i < num_keys; i++)
@@ -76,6 +86,18 @@ int main(int argc, char ** argv)
         before = get_time();
         for(i = 0; i < num_keys; i++)
             DELETE_STR_FROM_HASH(new_string_from_integer(i));
+    }
+
+    else if(!strcmp(argv[2], "lookupstring"))
+    {
+        srandom(1); // for a fair/deterministic comparison
+        char ** str_keys = (char**)malloc(sizeof(char*) * num_keys);
+        for(i = 0; i < num_keys; i++)
+            INSERT_STR_INTO_HASH(new_string_from_integer(i), value);
+            str_keys[i] = new_string_from_integer(i);
+        before = get_time();
+        for(i = 0; i < num_keys; i++)
+            LOOKUP_STR_IN_HASH(str_keys[(int)random() % num_keys]);
     }
 
     double after = get_time();

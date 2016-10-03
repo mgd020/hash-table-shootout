@@ -59,6 +59,18 @@
     </tr>
 
     <tr>
+        <th>Lookups: Execution Time</th>
+        <td>
+            <div class="chart" id="lookup-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+        <td>
+            <div class="chart" id="lookupstring-runtime"></div>
+            <div class="xaxis-title">number of entries in hash table</div>
+        </td>
+    </tr>
+
+    <tr>
         <th>Memory Usage</th>
         <td>
             <div class="chart" id="sequential-memory"></div>
@@ -97,6 +109,11 @@
         tickFormatter: function(num, obj) { return parseInt(num/1024/1024) + 'MiB'; }
     };
 
+    yaxis_lookup_settings = {
+        tickSize: 1,
+        tickFormatter: function(num, obj) { return num.toFixed(1) + ' sec.'; }
+    };
+
     legend_settings = {
         position: 'nw',
         backgroundOpacity: 0
@@ -118,16 +135,26 @@
         legend: legend_settings
     };
 
+    lookup_settings = {
+        series: series_settings,
+        grid: grid_settings,
+        xaxis: xaxis_settings,
+        yaxis: yaxis_lookup_settings,
+        legend: legend_settings
+    };
+
     __CHART_DATA_GOES_HERE__
 
     $(function () {
         $.plot($("#sequential-runtime"), chart_data['sequential-runtime'], runtime_settings);
         $.plot($("#random-runtime"),     chart_data['random-runtime'],     runtime_settings);
         $.plot($("#delete-runtime"),     chart_data['delete-runtime'],     runtime_settings);
+        $.plot($("#lookup-runtime"),     chart_data['lookup-runtime'],     lookup_settings);
         $.plot($("#sequential-memory"),  chart_data['sequential-memory'],  memory_settings);
         $.plot($("#sequentialstring-runtime"), chart_data['sequentialstring-runtime'], runtime_settings);
         $.plot($("#randomstring-runtime"),     chart_data['randomstring-runtime'],     runtime_settings);
         $.plot($("#deletestring-runtime"),     chart_data['deletestring-runtime'],     runtime_settings);
+        $.plot($("#lookupstring-runtime"),     chart_data['lookupstring-runtime'],     lookup_settings);
         $.plot($("#sequentialstring-memory"),  chart_data['sequentialstring-memory'],  memory_settings);
     });
 </script>

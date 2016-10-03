@@ -38,7 +38,7 @@ programs = [
 minkeys  = 128
 maxkeys  = 5*1000*1000
 interval = 2
-best_out_of = 1
+best_out_of = 3
 
 # for the final run, use this:
 #minkeys  =  2*1000*1000
@@ -52,7 +52,7 @@ best_out_of = 1
 if len(sys.argv) > 1:
     benchtypes = sys.argv[1:]
 else:
-    benchtypes = ('sequential', 'random', 'delete', 'sequentialstring', 'randomstring', 'deletestring')
+    benchtypes = ('sequential', 'random', 'delete', 'lookup', 'sequentialstring', 'randomstring', 'deletestring', 'lookupstring')
 
 for benchtype in benchtypes:
     nkeys = minkeys
