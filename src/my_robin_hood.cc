@@ -11,7 +11,7 @@ struct HashTableTraits {
     typedef std::hash<Key> hash_type;
     typedef std::equal_to<Key> pred_type;
     static const int max_load_factor = 75; // percent
-    static const int min_load_factory = 25; // percent
+    static const int min_load_factor = 25; // percent
     static const int min_array_size = 8; // must be 2 ** n
 };
 
@@ -34,10 +34,14 @@ public:
     size_t entry_count;
     size_t bucket_mask;
     size_t grow_count;
+    size_t shrink_count;
 
     HashTable():
-        entry_count(0) {
-        resize(Traits::min_array_size);
+        entries(NULL),
+        array_size(0),
+        entry_count(0)
+    {
+        rehash(Traits::min_array_size);
     }
 
     ~HashTable() {
@@ -61,8 +65,18 @@ public:
         return preder(k1, k2);
     }
 
-    void resize(size_t new_size) {
-        /* Allocate entries array, setting array_size and bucket_mask. */
+    bool rehash(size_t new_size) {
+        if (new_size < Traits::min_array_size) {
+            new_size = Traits::min_array_size;
+        }
+
+        if (new_size == array_size) {
+            return false;
+        }
+
+        Entry * old_entries = entries;
+        size_t old_size = array_size;
+
         array_size = new_size;
         entries = (Entry *) malloc(sizeof(Entry) * new_size);
         if (!entries) {
@@ -73,6 +87,20 @@ public:
         }
         bucket_mask = new_size - 1;
         grow_count = new_size * Traits::max_load_factor / 100;
+        shrink_count = new_size * Traits::min_load_factor / 100;
+
+        if (old_entries) {
+            for (size_t i = 0, e = entry_count; e && i < old_size; ++i) {
+                if (old_entries[i].probe_distance != -1) {
+                    set_helper(std::move(old_entries[i].key), std::move(old_entries[i].value));
+                    old_entries[i].~Entry();
+                    --e;
+                }
+            }
+            free(old_entries);
+        }
+
+        return true;
     }
 
     Entry * find(const Key & key) {
@@ -125,7 +153,7 @@ public:
             if (entry_probe_distance == probe_distance) {
                 // check for matching keys
                 if (pred(key, entry.key)) {
-                    entry.value = value;
+                    std::swap(entry.value, value);
                     return false;
                 }
 
@@ -150,10 +178,9 @@ public:
 
     Value * get(const Key & key) {
         Entry * entry = find(key);
-        if (entry) {
-            return &entry->value;
-        }
-        return NULL;
+        if (!entry)
+            return NULL;
+        return &entry->value;
     }
 
     bool set(Key key, Value value) {
@@ -162,33 +189,45 @@ public:
             return false;
         }
 
-        if (++entry_count < grow_count)
-            return true;
+        if (++entry_count > grow_count)
+            rehash(array_size << 1); // double
 
-        // grow
-        Entry * old_entries = entries;
-        size_t old_size = array_size;
-        resize(array_size << 1); // double
-        for (size_t i = 0, e = entry_count; e && i < old_size; ++i) {
-            if (old_entries[i].probe_distance != -1) {
-                set_helper(std::move(old_entries[i].key), std::move(old_entries[i].value));
-                old_entries[i].~Entry();
-                --e;
-            }
-        }
-        free(old_entries);
         return true;
     }
 
     bool del(const Key & key) {
         Entry * entry = find(key);
-        if (entry) {
+        if (!entry) {
+            return false;
+        }
+
+        if (--entry_count < shrink_count) {
             entry->~Entry(); // destruct
             entry->probe_distance = -1; // set as empty
-            --entry_count;
-            return true;
+            if (rehash(array_size >> 1)) { // half
+                return true;
+            }
         }
-        return false;
+
+        // TODO: move the rest down while they have probe distances
+
+        // move items up
+        // size_t bucket = (entry - entries + 1) & bucket_mastk;
+        // for (;; bucket = (bucket + 1) & bucket_mask) {
+        //     Entry & entry = entries[bucket];
+        //     if (entry.probe_distance != -1)
+        //         break;
+        //     if (entry.probe_distance != -1) {
+        //         Entry & left_entry = entries[(bucket + array_size - 1) & bucket_mask];
+        //         --entry.probe_distance;
+
+        //         std::move()
+        //         std::move()
+        //         std::swap()
+        //     }
+        // }
+
+        return true;
     }
 };
 
