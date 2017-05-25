@@ -4,7 +4,7 @@
 #include <cstdlib>
 
 #define USE_ROBIN_HOOD_HASH 1
-#define USE_SEPARATE_HASH_ARRAY 1
+#define USE_SEPARATE_HASH_ARRAY 0
 #define _aligned_malloc(X, Y) malloc(X)
 #define _aligned_free free
 

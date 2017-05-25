@@ -45,7 +45,7 @@ programs = [
 minkeys = 128
 maxkeys = 5 * 1000 * 1000
 interval = 2
-best_out_of = 5
+best_out_of = 3
 
 # for the final run, use this:
 # minkeys  =  2*1000*1000

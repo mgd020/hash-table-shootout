@@ -6,7 +6,17 @@
 using namespace std;
 
 
-template <class Key, class Value, class Hash = std::hash<Key>, class Pred = std::equal_to<Key> >
+template <class Key, class Value>
+struct HashTableTraits {
+    typedef std::hash<Key> hash_type;
+    typedef std::equal_to<Key> pred_type;
+    static const int max_load_factor = 75; // percent
+    static const int min_load_factory = 25; // percent
+    static const int min_array_size = 8; // must be 2 ** n
+};
+
+
+template <class Key, class Value, class Traits = HashTableTraits<Key, Value> >
 class HashTable {
 public:
     struct Entry {
@@ -14,8 +24,8 @@ public:
         Key key;
         Value value;
 
-        Entry(size_t probe_distance, const Key & key, const Value & value):
-            probe_distance(probe_distance), key(key), value(value) {
+        Entry(size_t probe_distance, Key && key, Value && value):
+            probe_distance(probe_distance), key(std::move(key)), value(std::move(value)) {
         }
     };
 
@@ -24,12 +34,10 @@ public:
     size_t entry_count;
     size_t bucket_mask;
     size_t grow_count;
-    Hash hash;
-    Pred pred;
 
     HashTable():
         entry_count(0) {
-        resize(8);
+        resize(Traits::min_array_size);
     }
 
     ~HashTable() {
@@ -43,6 +51,16 @@ public:
         free(entries);
     }
 
+    static size_t hash(const Key & key) {
+        static const typename Traits::hash_type hasher;
+        return hasher(key);
+    }
+
+    static bool pred(const Key & k1, const Key & k2) {
+        static const typename Traits::pred_type preder;
+        return preder(k1, k2);
+    }
+
     void resize(size_t new_size) {
         /* Allocate entries array, setting array_size and bucket_mask. */
         array_size = new_size;
@@ -54,11 +72,14 @@ public:
             entries[i].probe_distance = -1;
         }
         bucket_mask = new_size - 1;
-        grow_count = new_size * 75 / 100;
+        grow_count = new_size * Traits::max_load_factor / 100;
     }
 
-    Value * get(const Key & key) {
-        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
+    Entry * find(const Key & key) {
+        size_t bucket = hash(key) & bucket_mask;
+        size_t probe_distance = 0;
+
+        for (;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
             Entry & entry = entries[bucket];
             size_t entry_probe_distance = entry.probe_distance;
 
@@ -70,7 +91,7 @@ public:
             if (entry_probe_distance == probe_distance) {
                 // check for matching keys
                 if (pred(key, entry.key)) {
-                    return &entry.value;
+                    return &entry;
                 }
 
                 // keys dont match, it might be the next one (because of collisions)
@@ -86,23 +107,26 @@ public:
         }
     }
 
-    bool set(Key key, Value value) {
-        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
+    bool set_helper(Key && key, Value && value) {
+        // returns if new element was added
+        size_t bucket = hash(key) & bucket_mask;
+        size_t probe_distance = 0;
+
+        for (;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
             Entry & entry = entries[bucket];
             size_t entry_probe_distance = entry.probe_distance;
 
             if (entry_probe_distance == -1) {
                 // here's an empty spot! lets put it here
-                new (&entry) Entry(probe_distance, key, value);
-                ++entry_count;
-                break;
+                new (&entry) Entry(probe_distance, std::move(key), std::move(value));
+                return true;
             }
 
             if (entry_probe_distance == probe_distance) {
                 // check for matching keys
                 if (pred(key, entry.key)) {
                     entry.value = value;
-                    return true;
+                    return false;
                 }
 
                 // keys dont match, it might be the next one (because of collisions)
@@ -122,57 +146,49 @@ public:
             // this entry is further from its bucket than we are
             // leave it alone and keep looking for a spot
         }
+    }
 
-        if (entry_count < grow_count)
+    Value * get(const Key & key) {
+        Entry * entry = find(key);
+        if (entry) {
+            return &entry->value;
+        }
+        return NULL;
+    }
+
+    bool set(Key key, Value value) {
+        if (!set_helper(std::move(key), std::move(value))) {
+            // no new element added
             return false;
+        }
+
+        if (++entry_count < grow_count)
+            return true;
 
         // grow
         Entry * old_entries = entries;
         size_t old_size = array_size;
-        size_t old_entry_count = entry_count;
-        entry_count = 0;
         resize(array_size << 1); // double
-        for (size_t i = 0; old_entry_count && i < old_size; ++i) {
+        for (size_t i = 0, e = entry_count; e && i < old_size; ++i) {
             if (old_entries[i].probe_distance != -1) {
-                set(old_entries[i].key, old_entries[i].value);
-                old_entries[i].~Entry();  // destruct
-                --old_entry_count;
+                set_helper(std::move(old_entries[i].key), std::move(old_entries[i].value));
+                old_entries[i].~Entry();
+                --e;
             }
         }
         free(old_entries);
-        return false;
+        return true;
     }
 
     bool del(const Key & key) {
-        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
-            Entry & entry = entries[bucket];
-            size_t entry_probe_distance = entry.probe_distance;
-
-            if (entry_probe_distance == -1) {
-                // we expected to find it here, but this slot is empty...
-                return false;
-            }
-
-            if (entry_probe_distance == probe_distance) {
-                // check for matching keys
-                if (pred(key, entry.key)) {
-                    entry.~Entry(); // destruct
-                    entry.probe_distance = -1;
-                    --entry_count;
-                    return true;
-                }
-
-                // keys dont match, it might be the next one (because of collisions)
-                continue;
-            }
-
-            if (entry_probe_distance < probe_distance) {
-                // we should have found the entry already, must not be here
-                return false;
-            }
-
-            // just keep looking...
+        Entry * entry = find(key);
+        if (entry) {
+            entry->~Entry(); // destruct
+            entry->probe_distance = -1; // set as empty
+            --entry_count;
+            return true;
         }
+        return false;
     }
 };
 
