@@ -37,8 +37,8 @@ build/ruby_hash: src/ruby_hash.c Makefile src/template.c
 build/robin_hood: src/robin_hood.cc Makefile src/template.c
 	g++ -O2 -lm src/robin_hood.cc -o build/robin_hood -std=c++0x
 
-build/custom: src/custom.cc Makefile src/template.c
-	g++ -O2 -lm -std=c++11 src/custom.cc -o build/custom
+build/custom: src/my_robin_hood.cc Makefile src/template.c
+	g++ -O2 -lm -std=c++11 src/my_robin_hood.cc -o build/custom
 
 bench:
 	python -u bench.py
