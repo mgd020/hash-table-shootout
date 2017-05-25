@@ -2,12 +2,15 @@
 #include <functional> // hash
 #include <cstdlib> // malloc, realloc, free
 
+#include <iostream>
+using namespace std;
+
 
 template <class Key, class Value, class Hash = std::hash<Key>, class Pred = std::equal_to<Key> >
 class HashTable {
 public:
     struct Entry {
-        size_t probe_distance;
+        size_t probe_distance;  // -1 means empty
         Key key;
         Value value;
 
@@ -30,13 +33,14 @@ public:
     }
 
     ~HashTable() {
-        for (size_t i = 0; i < array_size; ++i) {
+        for (size_t i = 0, e = entry_count; e && i < array_size; ++i) {
             Entry & entry = entries[i];
             if (entry.probe_distance != -1) {
                 entry.~Entry();
+                --e;
             }
         }
-        // free(entries);
+        free(entries);
     }
 
     void resize(size_t new_size) {
@@ -54,7 +58,7 @@ public:
     }
 
     Value * get(const Key & key) {
-        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; ++bucket, ++probe_distance) {
+        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
             Entry & entry = entries[bucket];
             size_t entry_probe_distance = entry.probe_distance;
 
@@ -83,7 +87,7 @@ public:
     }
 
     bool set(Key key, Value value) {
-        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; ++bucket, ++probe_distance) {
+        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
             Entry & entry = entries[bucket];
             size_t entry_probe_distance = entry.probe_distance;
 
@@ -125,20 +129,22 @@ public:
         // grow
         Entry * old_entries = entries;
         size_t old_size = array_size;
+        size_t old_entry_count = entry_count;
         entry_count = 0;
         resize(array_size << 1); // double
-        for (size_t i = 0; i < old_size; ++i) {
+        for (size_t i = 0; old_entry_count && i < old_size; ++i) {
             if (old_entries[i].probe_distance != -1) {
                 set(old_entries[i].key, old_entries[i].value);
                 old_entries[i].~Entry();  // destruct
+                --old_entry_count;
             }
         }
-        // free(old_entries);
+        free(old_entries);
         return false;
     }
 
     bool del(const Key & key) {
-        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; ++bucket, ++probe_distance) {
+        for (size_t bucket = hash(key) & bucket_mask, probe_distance = 0;; bucket = (bucket + 1) & bucket_mask, ++probe_distance) {
             Entry & entry = entries[bucket];
             size_t entry_probe_distance = entry.probe_distance;
 
@@ -185,9 +191,6 @@ typedef HashTable<const char *, int64_t> str_hash_t;
 #if 1
 #include "template.c"
 #else
-
-#include <iostream>
-using namespace std;
 
 template <class H>
 void dump(const H & hash_table) {

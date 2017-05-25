@@ -1,4 +1,11 @@
-import sys, os, subprocess, signal, os.path
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+import os
+import os.path
+import signal
+import subprocess
+import sys
+
 
 all_programs = [
     'glib_hash_table',
@@ -35,16 +42,16 @@ programs = [
     if os.path.isfile('./build/' + p) and (not os.path.isfile('./build/' + p + '.csv') or os.path.getmtime('./build/' + p) > os.path.getmtime('./build/' + p + '.csv'))
 ]
 
-minkeys  = 128
-maxkeys  = 5*1000*1000
+minkeys = 128
+maxkeys = 5 * 1000 * 1000
 interval = 2
-best_out_of = 3
+best_out_of = 5
 
 # for the final run, use this:
-#minkeys  =  2*1000*1000
-#maxkeys  = 40*1000*1000
-#interval =  2*1000*1000
-#best_out_of = 3
+# minkeys  =  2*1000*1000
+# maxkeys  = 40*1000*1000
+# interval =  2*1000*1000
+# best_out_of = 3
 # and use nice/ionice
 # and shut down to the console
 # and swapoff any swap files/partitions
@@ -62,12 +69,12 @@ for benchtype in benchtypes:
             fastest_attempt_data = ''
 
             for attempt in range(best_out_of):
-                proc = subprocess.Popen(['./build/'+program, str(nkeys), benchtype], stdout=subprocess.PIPE)
+                proc = subprocess.Popen(['./build/' + program, str(nkeys), benchtype], stdout=subprocess.PIPE)
 
                 # wait for the program to fill up memory and spit out its "ready" message
                 try:
                     runtime = float(proc.stdout.readline().strip())
-                except:
+                except Exception:
                     runtime = 0
 
                 ps_proc = subprocess.Popen(['ps up %d | tail -n1' % proc.pid], shell=True, stdout=subprocess.PIPE)
@@ -77,7 +84,7 @@ for benchtype in benchtypes:
                 os.kill(proc.pid, signal.SIGKILL)
                 proc.wait()
 
-                if nbytes and runtime: # otherwise it crashed
+                if nbytes and runtime:  # otherwise it crashed
                     line = ','.join(map(str, [benchtype, nkeys, program, nbytes, "%0.6f" % runtime]))
 
                     if fastest_attempt is None or runtime < fastest_attempt:
@@ -85,8 +92,10 @@ for benchtype in benchtypes:
                         fastest_attempt_data = line
 
             if fastest_attempt is not None:
-                print fastest_attempt_data
+                print(fastest_attempt_data)
                 with open('./build/' + program + '.csv', 'a') as f:
                     f.write(fastest_attempt_data + '\n')
+            else:
+                print(','.join(map(str, [benchtype, nkeys, program, 'FAILED'])))
 
         nkeys *= interval
