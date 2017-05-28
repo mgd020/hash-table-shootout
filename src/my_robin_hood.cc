@@ -10,15 +10,13 @@ template <class Key, class Value>
 struct HashTableTraits {
     typedef std::hash<Key> hash_type;
     typedef std::equal_to<Key> pred_type;
-    static const int max_load_factor = 75; // percent
-    static const int min_load_factor = 25; // percent
-    static const int min_array_size = 8; // must be 2 ** n
+    static const int load_factor = 75; // percent
+    static const int initial_array_size = 8; // must be 2 ** n
 };
 
 
 template <class Key, class Value, class Traits = HashTableTraits<Key, Value> >
 class HashTable {
-public:
     struct Entry {
         size_t probe_distance;  // -1 means empty
         Key key;
@@ -36,25 +34,6 @@ public:
     size_t grow_count;
     size_t shrink_count;
 
-    HashTable():
-        entries(NULL),
-        array_size(0),
-        entry_count(0)
-    {
-        rehash(Traits::min_array_size);
-    }
-
-    ~HashTable() {
-        for (size_t i = 0, e = entry_count; e && i < array_size; ++i) {
-            Entry & entry = entries[i];
-            if (entry.probe_distance != -1) {
-                entry.~Entry();
-                --e;
-            }
-        }
-        free(entries);
-    }
-
     static size_t hash(const Key & key) {
         static const typename Traits::hash_type hasher;
         return hasher(key);
@@ -65,15 +44,7 @@ public:
         return preder(k1, k2);
     }
 
-    bool rehash(size_t new_size) {
-        if (new_size < Traits::min_array_size) {
-            new_size = Traits::min_array_size;
-        }
-
-        if (new_size == array_size) {
-            return false;
-        }
-
+    void rehash(size_t new_size) {
         Entry * old_entries = entries;
         size_t old_size = array_size;
 
@@ -86,8 +57,12 @@ public:
             entries[i].probe_distance = -1;
         }
         bucket_mask = new_size - 1;
-        grow_count = new_size * Traits::max_load_factor / 100;
-        shrink_count = new_size * Traits::min_load_factor / 100;
+        grow_count = new_size * Traits::load_factor / 100;
+        if (new_size == Traits::initial_array_size) {
+            shrink_count = 0;
+        } else {
+            shrink_count = new_size * (100 - Traits::load_factor) / 100;
+        }
 
         if (old_entries) {
             for (size_t i = 0, e = entry_count; e && i < old_size; ++i) {
@@ -99,8 +74,6 @@ public:
             }
             free(old_entries);
         }
-
-        return true;
     }
 
     Entry * find(const Key & key) {
@@ -133,6 +106,8 @@ public:
 
             // just keep looking...
         }
+
+        // we will never get here...
     }
 
     bool set_helper(Key && key, Value && value) {
@@ -174,6 +149,28 @@ public:
             // this entry is further from its bucket than we are
             // leave it alone and keep looking for a spot
         }
+
+        // we will never get here
+    }
+
+public:
+
+    HashTable():
+        entries(NULL),
+        entry_count(0)
+    {
+        rehash(Traits::initial_array_size);
+    }
+
+    ~HashTable() {
+        for (size_t i = 0, e = entry_count; e && i < array_size; ++i) {
+            Entry & entry = entries[i];
+            if (entry.probe_distance != -1) {
+                entry.~Entry();
+                --e;
+            }
+        }
+        free(entries);
     }
 
     Value * get(const Key & key) {
@@ -189,7 +186,7 @@ public:
             return false;
         }
 
-        if (++entry_count > grow_count)
+        if (++entry_count == grow_count)
             rehash(array_size << 1); // double
 
         return true;
@@ -201,31 +198,29 @@ public:
             return false;
         }
 
-        if (--entry_count < shrink_count) {
-            entry->~Entry(); // destruct
-            entry->probe_distance = -1; // set as empty
-            if (rehash(array_size >> 1)) { // half
+        entry->~Entry(); // destruct
+        entry->probe_distance = -1; // set as empty
+
+        if (--entry_count == shrink_count) {
+            size_t new_size = array_size >> 1;
+            if (array_size != Traits::initial_array_size) {
+                rehash(array_size >> 1); // half
                 return true;
             }
         }
 
-        // TODO: move the rest down while they have probe distances
-
-        // move items up
-        // size_t bucket = (entry - entries + 1) & bucket_mastk;
-        // for (;; bucket = (bucket + 1) & bucket_mask) {
-        //     Entry & entry = entries[bucket];
-        //     if (entry.probe_distance != -1)
-        //         break;
-        //     if (entry.probe_distance != -1) {
-        //         Entry & left_entry = entries[(bucket + array_size - 1) & bucket_mask];
-        //         --entry.probe_distance;
-
-        //         std::move()
-        //         std::move()
-        //         std::swap()
-        //     }
-        // }
+        // move the following with PD > 0 left one position
+        size_t bucket = (entry - entries + 1) & bucket_mask;
+        for (;; bucket = (bucket + 1) & bucket_mask) {
+            Entry & entry = entries[bucket];
+            if (entry.probe_distance == -1 || entry.probe_distance == 0) {
+                break;
+            }
+            Entry & left_entry = entries[(bucket - 1) & bucket_mask];
+            new (&left_entry) Entry(entry.probe_distance - 1, std::move(entry.key), std::move(entry.value));
+            entry.probe_distance = -1;
+            entry.~Entry();
+        }
 
         return true;
     }
@@ -281,7 +276,15 @@ int main() {
     dump(h);
     h.set(8, 8);
     dump(h);
-    h.set(6, 6);
+    // h.set(6, 6);
+    // dump(h);
+    h.del(8);
+    dump(h);
+    h.del(17);
+    dump(h);
+    h.del(9);
+    dump(h);
+    h.del(0);
     dump(h);
 }
 
