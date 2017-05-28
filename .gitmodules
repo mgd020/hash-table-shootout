@@ -4,3 +4,6 @@
 [submodule "vendor/benchmark"]
 	path = vendor/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "vendor/sparsepp"]
+	path = vendor/sparsepp
+	url = https://github.com/greg7mdp/sparsepp.git
