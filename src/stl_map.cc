@@ -1,6 +1,7 @@
 #include <inttypes.h>
 #include <map>
 #include <string>
+#include "fnv1a.hpp"
 typedef std::map<int64_t, int64_t> hash_t;
 typedef std::map<std::string, int64_t> str_hash_t;
 #define SETUP hash_t hash; str_hash_t str_hash;

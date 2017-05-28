@@ -1,3 +1,5 @@
+#include "fnv1a.hpp"
+
 #include <utility> // swap
 #include <functional> // hash
 #include <cstdlib> // malloc, realloc, free
@@ -10,7 +12,8 @@ template <class Key, class Value>
 struct HashTableTraits {
     typedef std::hash<Key> hash_type;
     typedef std::equal_to<Key> pred_type;
-    static const int load_factor = 75; // percent
+    static const int grow_load_factor = 75; // percent
+    static const int shrink_load_factor = 25; // percent
     static const int initial_array_size = 8; // must be 2 ** n
 };
 
@@ -57,11 +60,11 @@ class HashTable {
             entries[i].probe_distance = -1;
         }
         bucket_mask = new_size - 1;
-        grow_count = new_size * Traits::load_factor / 100;
+        grow_count = new_size * Traits::grow_load_factor / 100;
         if (new_size == Traits::initial_array_size) {
             shrink_count = 0;
         } else {
-            shrink_count = new_size * (100 - Traits::load_factor) / 100;
+            shrink_count = new_size * Traits::shrink_load_factor / 100;
         }
 
         if (old_entries) {

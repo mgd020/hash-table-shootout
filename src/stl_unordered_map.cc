@@ -1,5 +1,6 @@
 #include <inttypes.h>
 #include <unordered_map>
+#include "fnv1a.hpp"
 typedef std::unordered_map<int64_t, int64_t> hash_t;
 typedef std::unordered_map<const char *, int64_t> str_hash_t;
 #define SETUP hash_t hash; str_hash_t str_hash;
