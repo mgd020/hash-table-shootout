@@ -20,6 +20,7 @@ all_programs = [
     'robin_hood',
     'stl_map',
     'custom',
+    'sparsepp',
 ]
 
 programs = []

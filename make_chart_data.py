@@ -49,6 +49,7 @@ proper_names = {
     'robin_hood': 'Robin Hood Hash',
     'stl_map': 'GCC 4.4 std::map',
     'custom': 'Custom',
+    'sparsepp': 'Sparsepp',
 }
 
 # do them in the desired order to make the legend not overlap the chart data
@@ -65,6 +66,7 @@ program_slugs = [
     'robin_hood',
     'qt_qhash',
     'custom',
+    'sparsepp',
 ]
 
 chart_data = {}
