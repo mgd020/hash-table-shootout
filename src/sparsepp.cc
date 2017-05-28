@@ -2,7 +2,7 @@
 #include <sparsepp/spp.h>
 #include "fnv1a.hpp"
 typedef spp::sparse_hash_map<int64_t, int64_t> hash_t;
-typedef spp::sparse_hash_map<const char *, int64_t> str_hash_t;
+typedef spp::sparse_hash_map<const char *, int64_t, std::hash<const char *> > str_hash_t;
 #define SETUP hash_t hash; str_hash_t str_hash;
 #define INSERT_INT_INTO_HASH(key, value) hash.insert(hash_t::value_type(key, value))
 #define LOOKUP_INT_IN_HASH(key) hash.find(key) != hash.end()
