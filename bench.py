@@ -5,6 +5,7 @@ import os.path
 import signal
 import subprocess
 import sys
+from threading import Timer
 
 
 all_programs = [
@@ -46,6 +47,7 @@ minkeys = 128
 maxkeys = 5 * 1000 * 1000
 interval = 2
 best_out_of = 3
+timeout_seconds = 1
 
 # for the final run, use this:
 # minkeys  =  2*1000*1000
@@ -70,18 +72,23 @@ for benchtype in benchtypes:
 
             for attempt in range(best_out_of):
                 proc = subprocess.Popen(['./build/' + program, str(nkeys), benchtype], stdout=subprocess.PIPE)
+                kill_proc = (lambda p: os.kill(p.pid, signal.SIGKILL))
+                timer = Timer(timeout_seconds, kill_proc, [proc])
+                timer.start()
 
                 # wait for the program to fill up memory and spit out its "ready" message
                 try:
                     runtime = float(proc.stdout.readline().strip())
                 except Exception:
                     runtime = 0
+                finally:
+                    timer.cancel()
 
                 ps_proc = subprocess.Popen(['ps up %d | tail -n1' % proc.pid], shell=True, stdout=subprocess.PIPE)
                 nbytes = int(ps_proc.stdout.read().split()[4]) * 1024
                 ps_proc.wait()
 
-                os.kill(proc.pid, signal.SIGKILL)
+                kill_proc(proc)
                 proc.wait()
 
                 if nbytes and runtime:  # otherwise it crashed
