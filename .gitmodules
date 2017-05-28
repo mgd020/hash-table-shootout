@@ -7,3 +7,6 @@
 [submodule "vendor/sparsepp"]
 	path = vendor/sparsepp
 	url = https://github.com/greg7mdp/sparsepp.git
+[submodule "vendor/lua"]
+	path = vendor/lua
+	url = https://github.com/lua/lua.git
