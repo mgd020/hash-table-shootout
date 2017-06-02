@@ -40,8 +40,8 @@ build/ruby_hash: src/ruby_hash.c src/template.c
 build/robin_hood: src/robin_hood.cc src/template.c
 	g++ -O2 -lm src/robin_hood.cc -o build/robin_hood -std=c++0x
 
-build/custom: src/my_robin_hood.cc src/template.c
-	g++ -O2 -lm -std=c++11 src/my_robin_hood.cc -o build/custom
+build/custom: src/my_robin_hood.cc src/template.cpp
+	g++ -O2 -lm -std=c++11 -Ivendor/benchmark/include -Lvendor/benchmark/src -lbenchmark src/my_robin_hood.cc -o build/custom
 
 bench:
 	python -u bench.py

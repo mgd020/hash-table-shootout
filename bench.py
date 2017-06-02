@@ -48,7 +48,7 @@ minkeys = 128
 maxkeys = 5 * 1000 * 1000
 interval = 2
 best_out_of = 3
-timeout_seconds = 1
+timeout_seconds = 3
 
 # for the final run, use this:
 # minkeys  =  2*1000*1000
@@ -65,9 +65,9 @@ else:
     benchtypes = ('sequential', 'random', 'delete', 'lookup', 'sequentialstring', 'randomstring', 'deletestring', 'lookupstring')
 
 for benchtype in benchtypes:
-    nkeys = minkeys
-    while nkeys <= maxkeys:
-        for program in programs:
+    for program in programs:
+        nkeys = minkeys
+        while nkeys <= maxkeys:
             fastest_attempt = None
             fastest_attempt_data = ''
 
@@ -105,5 +105,6 @@ for benchtype in benchtypes:
                     f.write(fastest_attempt_data + '\n')
             else:
                 print(','.join(map(str, [benchtype, nkeys, program, 'FAILED'])))
+                break
 
-        nkeys *= interval
+            nkeys *= interval

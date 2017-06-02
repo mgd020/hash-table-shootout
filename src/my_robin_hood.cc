@@ -13,7 +13,7 @@ struct HashTableTraits {
     typedef std::hash<Key> hash_type;
     typedef std::equal_to<Key> pred_type;
     static const int grow_load_factor = 75; // percent
-    static const int shrink_load_factor = 25; // percent
+    static const int shrink_load_factor = 20; // percent
     static const int initial_array_size = 8; // must be 2 ** n
 };
 
@@ -177,6 +177,8 @@ public:
     }
 
     Value * get(const Key & key) {
+        if (!entry_count)
+            return NULL;
         Entry * entry = find(key);
         if (!entry)
             return NULL;
@@ -189,13 +191,15 @@ public:
             return false;
         }
 
-        if (++entry_count == grow_count)
+        if (++entry_count >= grow_count)
             rehash(array_size << 1); // double
 
         return true;
     }
 
     bool del(const Key & key) {
+        if (!entry_count)
+            return false;
         Entry * entry = find(key);
         if (!entry) {
             return false;
@@ -204,12 +208,9 @@ public:
         entry->~Entry(); // destruct
         entry->probe_distance = -1; // set as empty
 
-        if (--entry_count == shrink_count) {
-            size_t new_size = array_size >> 1;
-            if (array_size != Traits::initial_array_size) {
-                rehash(array_size >> 1); // half
-                return true;
-            }
+        if (--entry_count < shrink_count) {
+            rehash(array_size >> 1); // half
+            return true;
         }
 
         // move the following with PD > 0 left one position
@@ -242,6 +243,8 @@ typedef HashTable<const char *, int64_t> str_hash_t;
 #define DELETE_STR_FROM_HASH(key) str_hash.del(key)
 
 #if 1
+#include "template.cpp"
+#elif 1
 #include "template.c"
 #else
 

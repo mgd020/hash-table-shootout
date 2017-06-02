@@ -7,6 +7,16 @@
 #include <stdio.h>
 #include <math.h>
 
+/*
+    insert new items
+    insert existing items
+    lookup existing items
+    lookup missing items
+    delete missing items
+    delete items
+    insert then delete
+*/
+
 double get_time(void)
 {
     struct timeval tv;
